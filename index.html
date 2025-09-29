@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Play-Money Slot Demo</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root { --bg: #0f0b17; --card: #1b1430; --accent: #7c2cff; }
+    body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 18px; text-align: center; }
+    header { display: flex; align-items: center; gap: 12px; justify-content: center; }
+    h1 { margin: 0; font-size: 20px; }
+    .balance { margin-top: 12px; font-weight: 700; }
+    .reels { display: flex; gap: 10px; margin: 24px 0; justify-content: center; }
+    .reel { width: 110px; height: 110px; border-radius: 12px; background: linear-gradient(180deg, #24132f, #1b1430); display: flex; align-items: center; justify-content: center; font-size: 44px; box-shadow: 0 6px 18px rgba(0,0,0,0.6); }
+    .controls { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    input[type=number] { width: 100px; padding: 8px; border-radius: 8px; border: none; font-size: 16px; }
+    button { padding: 10px 16px; border-radius: 10px; border: none; font-size: 16px; cursor: pointer; }
+    .message { margin-top: 12px; font-size: 16px; }
+    .chips { margin-top: 18px; }
+    .chip { display: inline-block; padding: 6px 10px; border-radius: 20px; background: rgba(255,255,255,0.1); margin: 6px; font-size: 14px; color: #ddd; }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="icons/icon-192.png" alt="logo" style="width:40px; height:40px; border-radius:8px">
+    <div>
+      <h1>Slot Game Demo</h1>
+      <div style="font-size:13px; color:#cfc9e8; opacity:0.9;">Play-Money Version</div>
+    </div>
+  </header>
+
+  <div class="balance">ব্যালান্স: ৳ <span id="balance">1000</span></div>
+
+  <div class="reels">
+    <div id="r1" class="reel">🍒</div>
+    <div id="r2" class="reel">🍋</div>
+    <div id="r3" class="reel">⭐</div>
+  </div>
+
+  <div class="controls">
+    <label>Bet: <input id="bet" type="number" value="10" min="1"></label>
+    <button id="spin">Spin</button>
+    <button id="max">Max</button>
+    <button id="reset">Reset</button>
+  </div>
+
+  <div class="message" id="message">বেট দিন, তারপর স্পিন করুন</div>
+
+  <div class="chips">
+    <span class="chip">2-of-kind = 2×</span>
+    <span class="chip">3-of-kind = 10×</span>
+    <span class="chip">Demo RTP ~92%</span>
+  </div>
+
+  <script>
+    const symbols = ['🍒','🍋','🔔','⭐','💎','7️⃣'];
+    const r1 = document.getElementById('r1'), r2 = document.getElementById('r2'), r3 = document.getElementById('r3');
+    const balanceEl = document.getElementById('balance'), betInput = document.getElementById('bet');
+    const spinBtn = document.getElementById('spin'), msg = document.getElementById('message');
+    const maxBtn = document.getElementById('max'), resetBtn = document.getElementById('reset');
+
+    function randSym() { return symbols[Math.floor(Math.random() * symbols.length)]; }
+
+    spinBtn.addEventListener('click', () => {
+      let bet = Math.max(1, parseInt(betInput.value) || 1);
+      let balance = parseInt(balanceEl.textContent);
+      if (bet > balance) { msg.textContent = 'ব্যালান্স পর্যাপ্ত নয়'; return; }
+      balance -= bet; balanceEl.textContent = balance; msg.textContent = 'স্পিন হচ্ছে...';
+      let cycles = 24; let i = 0;
+      let timer = setInterval(() => {
+        r1.textContent = randSym(); r2.textContent = randSym(); r3.textContent = randSym();
+        i++; if (i >= cycles) {
+          clearInterval(timer);
+          let s1 = randSym(), s2 = randSym(), s3 = randSym();
+          r1.textContent = s1; r2.textContent = s2; r3.textContent = s3;
+          let payout = 0;
+          if (s1 === s2 && s2 === s3) { payout = bet * 10; }
+          else if (s1 === s2 || s2 === s3 || s1 === s3) { payout = bet * 2; }
+          balance += payout; balanceEl.textContent = balance;
+          if (payout > 0) { msg.textContent = 'আপনি জিতেছেন: ৳' + payout; }
+          else { msg.textContent = 'জেতেননি — আবার চেষ্টা করুন।'; }
+        }
+      }, 80);
+    });
+
+    maxBtn.addEventListener('click', () => {
+      let bal = parseInt(balanceEl.textContent);
+      betInput.value = Math.max(1, Math.floor(bal / 10));
+    });
+
+    resetBtn.addEventListener('click', () => {
+      balanceEl.textContent = 1000; msg.textContent = 'ব্যালান্স রিসেট করা হয়েছে';
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(err => { console.error('SW failed:', err); });
+    }
+  </script>
+</body>
+</html>
